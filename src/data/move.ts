@@ -1897,7 +1897,8 @@ export class StealEatBerryAttr extends EatBerryAttr {
  *  Attribute used for moves that destroy a random berry on the target.
  *  Used for Incinerate.
  */
-export class DestroyBerryAttr extends EatBerryAttr {
+export class DestroyBerryAttr extends MoveEffectAttr {
+  protected chosenBerry: BerryModifier;
   constructor() {
     super();
   }
@@ -1912,7 +1913,7 @@ export class DestroyBerryAttr extends EatBerryAttr {
   apply(user: Pokemon, target: Pokemon, move: Move, args: any[]): boolean {
 
     const cancelled = new Utils.BooleanHolder(false);
-    applyAbAttrs(BlockItemTheftAbAttr, target, cancelled); // check for abilities that block item theft
+    applyAbAttrs(BlockItemTheftAbAttr, target, cancelled); // check for abilities that block item theft/destruction
     if (cancelled.value === true) {
       return false;
     }
@@ -1929,11 +1930,17 @@ export class DestroyBerryAttr extends EatBerryAttr {
       }
       target.scene.updateModifiers(target.isPlayer());
 
-      user.scene.queueMessage(getPokemonMessage(user, ` burned \n${target.name}'s ${this.chosenBerry.type.name}!`));
+      const message = i18next.t("battle:destroyBerry", {targetName: target.name, berryName: this.chosenBerry.type.name});
+      user.scene.queueMessage(message);
       return true;
     }
 
     return false;
+  }
+
+  getTargetHeldBerries(target: Pokemon): BerryModifier[] {
+    return target.scene.findModifiers(m => m instanceof BerryModifier
+      && (m as BerryModifier).pokemonId === target.id, target.isPlayer()) as BerryModifier[];
   }
 }
 

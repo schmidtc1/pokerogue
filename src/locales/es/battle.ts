@@ -60,5 +60,6 @@ export const battle: SimpleTranslationEntries = {
   "foePokemonWithAffix": "El {{pokemonName}} enemigo",
   "useMove": "¡{{pokemonNameWithAffix}} usó {{moveName}}!",
   "drainMessage": "¡{{pokemonName}} tuvo su\nenergía absorbida!",
-  "regainHealth": "¡{{pokemonName}} recuperó\nPS!"
+  "regainHealth": "¡{{pokemonName}} recuperó\nPS!",
+  "destroyBerry": "{{targetName}}'s {{berryName}} was burned up!"
 } as const;
