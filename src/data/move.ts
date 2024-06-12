@@ -1894,6 +1894,50 @@ export class StealEatBerryAttr extends EatBerryAttr {
 }
 
 /**
+ *  Attribute used for moves that destroy a random berry on the target.
+ *  Used for Incinerate.
+ */
+export class DestroyBerryAttr extends EatBerryAttr {
+  constructor() {
+    super();
+  }
+  /**
+ * User steals a random berry from the target and then eats it.
+ * @param {Pokemon} user Pokemon that used the move and will eat the stolen berry
+ * @param {Pokemon} target Pokemon that will have its berry stolen
+ * @param {Move} move Move being used
+ * @param {any[]} args Unused
+ * @returns {boolean} true if the function succeeds
+ */
+  apply(user: Pokemon, target: Pokemon, move: Move, args: any[]): boolean {
+
+    const cancelled = new Utils.BooleanHolder(false);
+    applyAbAttrs(BlockItemTheftAbAttr, target, cancelled); // check for abilities that block item theft
+    if (cancelled.value === true) {
+      return false;
+    }
+
+    const heldBerries = this.getTargetHeldBerries(target).filter(i => i.getTransferrable(false));
+
+    if (heldBerries.length) { // if the target has berries, pick a random berry and destroy it
+      this.chosenBerry = heldBerries[user.randSeedInt(heldBerries.length)];
+
+      if (this.chosenBerry.stackCount === 1) { // remove modifier if its the last berry
+        target.scene.removeModifier(this.chosenBerry, !target.isPlayer());
+      } else {
+        this.chosenBerry.stackCount--;
+      }
+      target.scene.updateModifiers(target.isPlayer());
+
+      user.scene.queueMessage(getPokemonMessage(user, ` burned \n${target.name}'s ${this.chosenBerry.type.name}!`));
+      return true;
+    }
+
+    return false;
+  }
+}
+
+/**
  * Move attribute that signals that the move should cure a status effect
  * @extends MoveEffectAttr
  * @see {@linkcode apply()}
@@ -6794,6 +6838,7 @@ export function initMoves() {
       .attr(ForceSwitchOutAttr),
     new AttackMove(Moves.INCINERATE, Type.FIRE, MoveCategory.SPECIAL, 60, 100, 15, -1, 0, 5)
       .target(MoveTarget.ALL_NEAR_ENEMIES)
+      .attr(DestroyBerryAttr)
       .partial(),
     new StatusMove(Moves.QUASH, Type.DARK, 100, 15, -1, 0, 5)
       .unimplemented(),
