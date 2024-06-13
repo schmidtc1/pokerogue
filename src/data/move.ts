@@ -6155,7 +6155,22 @@ export function initMoves() {
       .target(MoveTarget.RANDOM_NEAR_ENEMY)
       .partial(),
     new SelfStatusMove(Moves.STOCKPILE, Type.NORMAL, -1, 20, -1, 0, 3)
-      .unimplemented(),
+      .attr(StatChangeAttr, [BattleStat.DEF, BattleStat.SPDEF], 1, true)
+      .condition((user, target, move) => {
+        const stocks = user.getMoveHistory().reverse();
+        let stockCount = 0;
+        stocks.forEach(m => {
+          if (m.move === move.id) {
+            stockCount++;
+          }
+        });
+        if (stockCount === 3) {
+          return false;
+        } else {
+          return true;
+        }
+      })
+      .partial(),
     new AttackMove(Moves.SPIT_UP, Type.NORMAL, MoveCategory.SPECIAL, -1, 100, 10, -1, 0, 3)
       .unimplemented(),
     new SelfStatusMove(Moves.SWALLOW, Type.NORMAL, -1, 10, -1, 0, 3)
