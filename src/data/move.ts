@@ -5574,6 +5574,18 @@ export class VariableTargetAttr extends MoveAttr {
   }
 }
 
+export class UnselectableMoveAttr extends MoveAttr {
+  private unselectableCondition: MoveConditionFunc;
+  constructor(unselectableCondition: MoveConditionFunc) {
+    super();
+    this.unselectableCondition = unselectableCondition;
+  }
+
+  getCondition(): MoveConditionFunc {
+    return this.unselectableCondition;
+  }
+}
+
 const failOnGravityCondition: MoveConditionFunc = (user, target, move) => !user.scene.arena.getTag(ArenaTagType.GRAVITY);
 
 const failOnBossCondition: MoveConditionFunc = (user, target, move) => !target.isBossImmune();
@@ -5589,6 +5601,8 @@ const failIfDampCondition: MoveConditionFunc = (user, target, move) => {
   }
   return !cancelled.value;
 };
+
+const failOnNoBerryCondition: MoveConditionFunc = (user, target, move) => user.scene.findModifiers(m => m instanceof BerryModifier, user.isPlayer()).length > 0;
 
 const userSleptOrComatoseCondition: MoveConditionFunc = (user: Pokemon, target: Pokemon, move: Move) =>  user.status?.effect === StatusEffect.SLEEP || user.hasAbility(Abilities.COMATOSE);
 
@@ -6138,6 +6152,7 @@ export function initMoves() {
     new AttackMove(Moves.HIGH_JUMP_KICK, Type.FIGHTING, MoveCategory.PHYSICAL, 130, 90, 10, -1, 0, 1)
       .attr(MissEffectAttr, crashDamageFunc)
       .attr(NoEffectAttr, crashDamageFunc)
+      .attr(UnselectableMoveAttr, failOnGravityCondition)
       .condition(failOnGravityCondition)
       .recklessMove(),
     new StatusMove(Moves.GLARE, Type.NORMAL, 100, 30, -1, 0, 1)
@@ -7894,10 +7909,8 @@ export function initMoves() {
     new SelfStatusMove(Moves.STUFF_CHEEKS, Type.NORMAL, -1, 10, -1, 0, 8) // TODO: Stuff Cheeks should not be selectable when the user does not have a berry, see wiki
       .attr(EatBerryAttr)
       .attr(StatChangeAttr, BattleStat.DEF, 2, true)
-      .condition((user) => {
-        const userBerries = user.scene.findModifiers(m => m instanceof BerryModifier);
-        return userBerries.length > 0;
-      })
+      .attr(UnselectableMoveAttr, failOnNoBerryCondition)
+      .condition(failOnNoBerryCondition)
       .partial(),
     new SelfStatusMove(Moves.NO_RETREAT, Type.FIGHTING, -1, 5, -1, 0, 8)
       .attr(StatChangeAttr, [ BattleStat.ATK, BattleStat.DEF, BattleStat.SPATK, BattleStat.SPDEF, BattleStat.SPD ], 1, true)
